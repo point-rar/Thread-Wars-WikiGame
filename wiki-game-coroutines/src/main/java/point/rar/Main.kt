@@ -1,6 +1,12 @@
 package point.rar
 
+import point.rar.wiki.data.source.WikiRemoteDataSource
+import point.rar.wiki.remote.WikiRemoteDataSourceImpl
 
-fun main(args: Array<String>) {
-    println("Hello world!")
+suspend fun main(args: Array<String>) {
+    val wikiRemoteDataSource: WikiRemoteDataSource = WikiRemoteDataSourceImpl()
+
+    println(
+        wikiRemoteDataSource.getLinksByTitle("Coroutine")
+    )
 }
