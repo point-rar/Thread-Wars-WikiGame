@@ -17,10 +17,15 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 
 class WikiGameDumbImpl : WikiGame {
+    companion object {
+        private const val REQUEST_SENT = 1
+        private const val RESPONSE_RECEIVED = 2
+    }
+
     private val wikiRemoteDataSource: WikiRemoteDataSource = WikiRemoteDataSourceImpl()
 
     override fun play(startPageTitle: String, endPageTitle: String, maxDepth: Int): Result<List<String>> = runBlocking {
-        val visitedPages: MutableSet<String> = ConcurrentHashMap.newKeySet()
+        val visitedPages: MutableMap<String, Int> = ConcurrentHashMap()
         val resChannel = Channel<Result<Page>>()
         val scope = CoroutineScope(coroutineContext)
 
@@ -42,7 +47,8 @@ class WikiGameDumbImpl : WikiGame {
         }
         path.add(startPage.title)
 
-        println(visitedPages.size)
+        val pagesWithResponseCount = visitedPages.entries.filter { it.value == RESPONSE_RECEIVED }.count()
+        println("Received responses from $pagesWithResponseCount pages")
         return@runBlocking Result.success(path.reversed())
     }
 
@@ -51,14 +57,14 @@ class WikiGameDumbImpl : WikiGame {
         endPageTitle: String,
         curDepth: Int,
         maxDepth: Int,
-        visitedPages: MutableSet<String>,
+        visitedPages: MutableMap<String, Int>,
         resChannel: Channel<Result<Page>>,
         coroutineScope: CoroutineScope
     ) {
         if (visitedPages.contains(page.title)) {
             return
         }
-        visitedPages.add(page.title)
+        visitedPages[page.title] = REQUEST_SENT
 
         if (page.title == endPageTitle) {
             resChannel.send(Result.success(page))
@@ -72,6 +78,9 @@ class WikiGameDumbImpl : WikiGame {
 
         println("Started for ${page.title}, depth = $curDepth")
         val links = wikiRemoteDataSource.getLinksByTitle(page.title)
+
+        visitedPages[page.title] = RESPONSE_RECEIVED
+
         links.forEach {
             // Creates new scope because we don't want to wait for all the coroutines to complete
             coroutineScope.launch {
