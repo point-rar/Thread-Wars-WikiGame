@@ -6,6 +6,8 @@ import point.rar.game.repository.WikiGameDumbImpl
 fun main(args: Array<String>) {
     val wikiGame: WikiGame = WikiGameDumbImpl()
 
-    val path = wikiGame.play("Java (programming language)", "Philosophy", maxDepth = 4)
+    val start = System.nanoTime()
+    val path = wikiGame.play("Бакуган", "Библия", maxDepth = 6)
+    println((System.nanoTime() - start) / 1_000_000)
     println(path)
 }

@@ -20,7 +20,7 @@ class WikiGameDumbImpl : WikiGame {
     private val wikiRemoteDataSource: WikiRemoteDataSource = WikiRemoteDataSourceImpl()
 
     override fun play(startPageTitle: String, endPageTitle: String, maxDepth: Int): Result<List<String>> = runBlocking {
-        val visitedPages: Set<String> = ConcurrentHashMap.newKeySet()
+        val visitedPages: MutableSet<String> = ConcurrentHashMap.newKeySet()
         val resChannel = Channel<Result<Page>>()
         val scope = CoroutineScope(coroutineContext)
 
@@ -42,6 +42,7 @@ class WikiGameDumbImpl : WikiGame {
         }
         path.add(startPage.title)
 
+        println(visitedPages.size)
         return@runBlocking Result.success(path.reversed())
     }
 
@@ -50,13 +51,14 @@ class WikiGameDumbImpl : WikiGame {
         endPageTitle: String,
         curDepth: Int,
         maxDepth: Int,
-        visitedPages: Set<String>,
+        visitedPages: MutableSet<String>,
         resChannel: Channel<Result<Page>>,
         coroutineScope: CoroutineScope
     ) {
         if (visitedPages.contains(page.title)) {
             return
         }
+        visitedPages.add(page.title)
 
         if (page.title == endPageTitle) {
             resChannel.send(Result.success(page))
