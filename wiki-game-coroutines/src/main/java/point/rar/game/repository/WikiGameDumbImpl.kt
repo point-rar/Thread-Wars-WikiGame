@@ -27,7 +27,8 @@ class WikiGameDumbImpl : WikiGame {
     override fun play(startPageTitle: String, endPageTitle: String, maxDepth: Int): Result<List<String>> = runBlocking {
         val visitedPages: MutableMap<String, Int> = ConcurrentHashMap()
         val resChannel = Channel<Result<Page>>()
-        val scope = CoroutineScope(coroutineContext)
+        val ctx = newFixedThreadPoolContext(4, "fixed-thread-context")
+        val scope = CoroutineScope(ctx)
 
         val startPage = Page(startPageTitle, null)
         scope.launch {
@@ -35,7 +36,7 @@ class WikiGameDumbImpl : WikiGame {
         }
 
         val resPage = resChannel.receive()
-        coroutineContext.cancelChildren()
+        ctx.cancelChildren()
 
         val endPage = resPage.getOrNull() ?: return@runBlocking Result.failure(resPage.exceptionOrNull()!!)
         val path = mutableListOf<String>()
