@@ -40,11 +40,7 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
     }
 
     override suspend fun getLinksByTitle(title: String): List<String> {
-//        return _getLinksByTitle(title)
-        val links = rateLimiter.executeSuspendFunction {
-            _getLinksByTitle(title)
-        }
-        return links
+        return _getLinksByTitle(title)
     }
 
     override suspend fun getBacklinksByTitle(title: String): List<String> {
@@ -66,7 +62,8 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
     }
 
     private suspend fun _getLinksByTitle(title: String): List<String> {
-        val response = client.get(URL) {
+        val response = rateLimiter.executeSuspendFunction {
+            client.get(URL) {
                 parameter("action", "query")
                 parameter("titles", title)
                 parameter("prop", "links")
@@ -74,6 +71,7 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
                 parameter("format", "json")
                 parameter("plnamespace", 0)
             }
+        }
 
         val wikiLinksResponse: WikiLinksResponse = response.body()
 
