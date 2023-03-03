@@ -1,12 +1,11 @@
 package point.rar
 
-import point.rar.wiki.data.source.WikiRemoteDataSource
-import point.rar.wiki.remote.WikiRemoteDataSourceImpl
+import point.rar.game.repository.WikiGame
+import point.rar.game.repository.WikiGameDumbImpl
 
-suspend fun main(args: Array<String>) {
-    val wikiRemoteDataSource: WikiRemoteDataSource = WikiRemoteDataSourceImpl()
+fun main(args: Array<String>) {
+    val wikiGame: WikiGame = WikiGameDumbImpl()
 
-    println(
-        wikiRemoteDataSource.getLinksByTitle("Coroutine")
-    )
+    val path = wikiGame.play("Java (programming language)", "Philosophy", maxDepth = 4)
+    println(path)
 }

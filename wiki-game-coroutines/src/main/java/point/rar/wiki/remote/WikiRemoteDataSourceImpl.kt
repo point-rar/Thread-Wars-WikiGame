@@ -17,8 +17,19 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
         val URL = "https://en.wikipedia.org/w/api.php"
     }
 
+//    private val rateLimiterConfig = RateLimiterConfig
+//        .custom()
+//        .limitForPeriod(25)
+//        .limitRefreshPeriod(Duration.ofSeconds(2))
+//        .timeoutDuration(Duration.ofDays(10000))
+//        .build()
+//    private val rateLimiterRegistry = RateLimiterRegistry.of(rateLimiterConfig)
+//    private val rateLimiter = rateLimiterRegistry.rateLimiter("rate limiter")
 
     private val client: HttpClient = HttpClient(CIO) {
+        engine {
+            maxConnectionsCount = 25
+        }
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
@@ -27,24 +38,12 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
     }
 
     override suspend fun getLinksByTitle(title: String): List<String> {
-        val request = client.get(URL) {
-            parameter("action", "query")
-            parameter("titles", title)
-            parameter("prop", "links")
-            parameter("pllimit", "max")
-            parameter("format", "json")
-            parameter("plnamespace", 0)
-        }
-
-        val wikiLinksResponse: WikiLinksResponse = request.body()
-
-        return wikiLinksResponse
-            .query
-            .pages
-            .values
-            .first()
-            .links
-            .map { it.title }
+        return _getLinksByTitle(title)
+//        val links = rateLimiter.executeSuspendFunction {
+//            _getLinksByTitle(title)
+//        }
+//
+//        return links
     }
 
     override suspend fun getBacklinksByTitle(title: String): List<String> {
@@ -63,5 +62,28 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
             .query
             .backlinks
             .map { it.title }
+    }
+
+    private suspend fun _getLinksByTitle(title: String): List<String> {
+        val response = client.get(URL) {
+                parameter("action", "query")
+                parameter("titles", title)
+                parameter("prop", "links")
+                parameter("pllimit", "max")
+                parameter("format", "json")
+                parameter("plnamespace", 0)
+            }
+
+        val wikiLinksResponse: WikiLinksResponse = response.body()
+
+        val links = wikiLinksResponse
+            .query
+            .pages
+            .values
+            .first()
+            .links
+            ?.map { it.title } ?: emptyList()
+
+        return links
     }
 }

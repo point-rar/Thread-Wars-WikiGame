@@ -30,7 +30,13 @@ dependencies {
 
     val kotlinx_serialization_json_version = "1.4.1"
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_json_version")
+
+    val resilience4jVersion = "2.0.0"
+    implementation("io.github.resilience4j:resilience4j-kotlin:${resilience4jVersion}")
+    implementation("io.github.resilience4j:resilience4j-ratelimiter:${resilience4jVersion}")
+    implementation("io.github.resilience4j:resilience4j-retry:${resilience4jVersion}")
 }
+
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
