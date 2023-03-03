@@ -14,7 +14,10 @@ import kotlinx.serialization.json.Json
 import point.rar.wiki.data.source.WikiRemoteDataSource
 import point.rar.wiki.domain.model.WikiBacklinksResponse
 import point.rar.wiki.domain.model.WikiLinksResponse
+import java.security.cert.X509Certificate
 import java.time.Duration
+import javax.net.ssl.SSLContext
+import javax.net.ssl.X509TrustManager
 
 class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
     companion object Parameter {
@@ -24,7 +27,7 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
     private val rateLimiterConfig = RateLimiterConfig
         .custom()
         .limitForPeriod(1)
-        .limitRefreshPeriod(Duration.ofMillis(5))
+        .limitRefreshPeriod(Duration.ofMillis(6))
         .timeoutDuration(Duration.ofDays(10000))
         .build()
 
@@ -36,32 +39,11 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
             json(Json {
                 ignoreUnknownKeys = true
             })
+
         }
     }
 
     override suspend fun getLinksByTitle(title: String): List<String> {
-        return _getLinksByTitle(title)
-    }
-
-    override suspend fun getBacklinksByTitle(title: String): List<String> {
-        val request = client.get(URL) {
-            parameter("action", "query")
-            parameter("bltitle", title)
-            parameter("list", "backlinks")
-            parameter("bllimit", "max")
-            parameter("format", "json")
-            parameter("blnamespace", 0)
-        }
-
-        val wikiBacklinksResponse: WikiBacklinksResponse = request.body()
-
-        return wikiBacklinksResponse
-            .query
-            .backlinks
-            .map { it.title }
-    }
-
-    private suspend fun _getLinksByTitle(title: String): List<String> {
         val response = rateLimiter.executeSuspendFunction {
             client.get(URL) {
                 parameter("action", "query")
@@ -84,5 +66,23 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
             ?.map { it.title } ?: emptyList()
 
         return links
+    }
+
+    override suspend fun getBacklinksByTitle(title: String): List<String> {
+        val request = client.get(URL) {
+            parameter("action", "query")
+            parameter("bltitle", title)
+            parameter("list", "backlinks")
+            parameter("bllimit", "max")
+            parameter("format", "json")
+            parameter("blnamespace", 0)
+        }
+
+        val wikiBacklinksResponse: WikiBacklinksResponse = request.body()
+
+        return wikiBacklinksResponse
+            .query
+            .backlinks
+            .map { it.title }
     }
 }

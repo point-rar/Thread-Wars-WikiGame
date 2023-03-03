@@ -76,7 +76,7 @@ class WikiGameDumbImpl : WikiGame {
             return
         }
 
-        println("Started for ${page.title}, depth = $curDepth")
+//        println("Started for ${page.title}, depth = $curDepth")
         val links = wikiRemoteDataSource.getLinksByTitle(page.title)
 
         visitedPages[page.title] = RESPONSE_RECEIVED
