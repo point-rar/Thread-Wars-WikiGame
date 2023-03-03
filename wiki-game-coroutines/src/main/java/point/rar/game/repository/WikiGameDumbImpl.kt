@@ -41,15 +41,15 @@ class WikiGameDumbImpl : WikiGame {
         val endPage = resPage.getOrNull() ?: return@runBlocking Result.failure(resPage.exceptionOrNull()!!)
         val path = mutableListOf<String>()
 
-        var curPg = endPage
-        while (curPg.parentPage != null) {
-            path.add(curPg.title)
-            curPg = curPg.parentPage!!
-        }
-        path.add(startPage.title)
+        var curPg: Page? = endPage
+        do {
+            path.add(curPg!!.title)
+            curPg = curPg!!.parentPage
+        } while (curPg != null)
 
         val pagesWithResponseCount = visitedPages.entries.filter { it.value == RESPONSE_RECEIVED }.count()
         println("Received responses from $pagesWithResponseCount pages")
+
         return@runBlocking Result.success(path.reversed())
     }
 
@@ -85,7 +85,15 @@ class WikiGameDumbImpl : WikiGame {
         links.forEach {
             // Creates new scope because we don't want to wait for all the coroutines to complete
             coroutineScope.launch {
-                processPage(Page(it, page), endPageTitle, curDepth + 1, maxDepth, visitedPages, resChannel, coroutineScope)
+                processPage(
+                    Page(it, page),
+                    endPageTitle,
+                    curDepth + 1,
+                    maxDepth,
+                    visitedPages,
+                    resChannel,
+                    coroutineScope
+                )
             }
         }
 
