@@ -1,18 +1,14 @@
 package point.rar.game.repository
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.cancelChildren
+import io.github.resilience4j.kotlin.ratelimiter.executeSuspendFunction
+import io.github.resilience4j.ratelimiter.RateLimiterConfig
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.newFixedThreadPoolContext
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import point.rar.wiki.data.source.WikiRemoteDataSource
 import point.rar.wiki.domain.model.Page
 import point.rar.wiki.remote.WikiRemoteDataSourceImpl
+import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 
@@ -21,6 +17,17 @@ class WikiGameDumbImpl : WikiGame {
         private const val REQUEST_SENT = 1
         private const val RESPONSE_RECEIVED = 2
     }
+
+
+    private val rateLimiterConfig = RateLimiterConfig
+            .custom()
+            .limitForPeriod(10)
+            .limitRefreshPeriod(Duration.ofMillis(60))
+            .timeoutDuration(Duration.ofDays(10000))
+            .build()
+
+    private val rateLimiterRegistry = RateLimiterRegistry.of(rateLimiterConfig)
+    private val rateLimiter = rateLimiterRegistry.rateLimiter("rate limiter")
 
     private val wikiRemoteDataSource: WikiRemoteDataSource = WikiRemoteDataSourceImpl()
 
@@ -73,7 +80,7 @@ class WikiGameDumbImpl : WikiGame {
         }
 
         if (curDepth == maxDepth) {
-            resChannel.send(Result.failure(RuntimeException("Depth is reached")))
+//            resChannel.send(Result.failure(RuntimeException("Depth is reached")))
             return
         }
 
@@ -84,16 +91,18 @@ class WikiGameDumbImpl : WikiGame {
 
         links.forEach {
             // Creates new scope because we don't want to wait for all the coroutines to complete
-            coroutineScope.launch {
-                processPage(
-                    Page(it, page),
-                    endPageTitle,
-                    curDepth + 1,
-                    maxDepth,
-                    visitedPages,
-                    resChannel,
-                    coroutineScope
-                )
+            rateLimiter.executeSuspendFunction {
+                coroutineScope.launch {
+                    processPage(
+                            Page(it, page),
+                            endPageTitle,
+                            curDepth + 1,
+                            maxDepth,
+                            visitedPages,
+                            resChannel,
+                            coroutineScope
+                    )
+                }
             }
         }
 

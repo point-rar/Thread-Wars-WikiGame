@@ -24,16 +24,6 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
         val URL = "https://ru.wikipedia.org/w/api.php"
     }
 
-    private val rateLimiterConfig = RateLimiterConfig
-        .custom()
-        .limitForPeriod(1)
-        .limitRefreshPeriod(Duration.ofMillis(6))
-        .timeoutDuration(Duration.ofDays(10000))
-        .build()
-
-    private val rateLimiterRegistry = RateLimiterRegistry.of(rateLimiterConfig)
-    private val rateLimiter = rateLimiterRegistry.rateLimiter("rate limiter")
-
     private val client: HttpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json {
@@ -44,26 +34,25 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
     }
 
     override suspend fun getLinksByTitle(title: String): List<String> {
-        val response = rateLimiter.executeSuspendFunction {
-            client.get(URL) {
-                parameter("action", "query")
-                parameter("titles", title)
-                parameter("prop", "links")
-                parameter("pllimit", "max")
-                parameter("format", "json")
-                parameter("plnamespace", 0)
-            }
+        val response = client.get(URL) {
+            parameter("action", "query")
+            parameter("titles", title)
+            parameter("prop", "links")
+            parameter("pllimit", "max")
+            parameter("format", "json")
+            parameter("plnamespace", 0)
         }
+
 
         val wikiLinksResponse: WikiLinksResponse = response.body()
 
         val links = wikiLinksResponse
-            .query
-            .pages
-            .values
-            .first()
-            .links
-            ?.map { it.title } ?: emptyList()
+                .query
+                .pages
+                .values
+                .first()
+                .links
+                ?.map { it.title } ?: emptyList()
 
         return links
     }
@@ -81,8 +70,8 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
         val wikiBacklinksResponse: WikiBacklinksResponse = request.body()
 
         return wikiBacklinksResponse
-            .query
-            .backlinks
-            .map { it.title }
+                .query
+                .backlinks
+                .map { it.title }
     }
 }
