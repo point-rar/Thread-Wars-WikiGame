@@ -14,10 +14,7 @@ import kotlinx.serialization.json.Json
 import point.rar.wiki.data.source.WikiRemoteDataSource
 import point.rar.wiki.domain.model.WikiBacklinksResponse
 import point.rar.wiki.domain.model.WikiLinksResponse
-import java.security.cert.X509Certificate
 import java.time.Duration
-import javax.net.ssl.SSLContext
-import javax.net.ssl.X509TrustManager
 
 class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
     companion object Parameter {
