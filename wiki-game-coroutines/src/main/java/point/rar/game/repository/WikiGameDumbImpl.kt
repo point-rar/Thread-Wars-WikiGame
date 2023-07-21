@@ -1,18 +1,15 @@
 package point.rar.game.repository
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.newFixedThreadPoolContext
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import point.rar.wiki.data.source.WikiRemoteDataSource
 import point.rar.wiki.domain.model.Page
 import point.rar.wiki.remote.WikiRemoteDataSourceImpl
+import java.lang.RuntimeException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 
@@ -26,28 +23,25 @@ class WikiGameDumbImpl : WikiGame {
 
     override fun play(startPageTitle: String, endPageTitle: String, maxDepth: Int): Result<List<String>> = runBlocking {
         val visitedPages: MutableMap<String, Int> = ConcurrentHashMap()
-        val resChannel = Channel<Result<Page>>()
         val ctx = newFixedThreadPoolContext(4, "fixed-thread-context")
         val scope = CoroutineScope(ctx)
 
         val startPage = Page(startPageTitle, null)
-        scope.launch {
-            processPage(startPage, endPageTitle, 0, maxDepth, visitedPages, resChannel, scope)
-        }
 
-        val resPage = resChannel.receive()
+        val res = processPage(startPage, endPageTitle, 0, maxDepth, visitedPages, scope)
+
         ctx.cancelChildren()
 
-        val endPage = resPage.getOrNull() ?: return@runBlocking Result.failure(resPage.exceptionOrNull()!!)
+        val endPage = res.getOrNull() ?: return@runBlocking Result.failure(res.exceptionOrNull()!!)
         val path = mutableListOf<String>()
 
         var curPg: Page? = endPage
         do {
             path.add(curPg!!.title)
-            curPg = curPg!!.parentPage
+            curPg = curPg.parentPage
         } while (curPg != null)
 
-        val pagesWithResponseCount = visitedPages.entries.filter { it.value == RESPONSE_RECEIVED }.count()
+        val pagesWithResponseCount = visitedPages.entries.count { it.value == RESPONSE_RECEIVED }
         println("Received responses from $pagesWithResponseCount pages")
 
         return@runBlocking Result.success(path.reversed())
@@ -59,22 +53,19 @@ class WikiGameDumbImpl : WikiGame {
         curDepth: Int,
         maxDepth: Int,
         visitedPages: MutableMap<String, Int>,
-        resChannel: Channel<Result<Page>>,
         coroutineScope: CoroutineScope
-    ) {
+    ): Result<Page> {
         if (visitedPages.contains(page.title)) {
-            return
+            return Result.success(page)
         }
         visitedPages[page.title] = REQUEST_SENT
 
         if (page.title == endPageTitle) {
-            resChannel.send(Result.success(page))
-            return
+            return Result.success(page)
         }
 
         if (curDepth == maxDepth) {
-            resChannel.send(Result.failure(RuntimeException("Depth is reached")))
-            return
+            return Result.failure(RuntimeException("Depth reached"))
         }
 
 //        println("Started for ${page.title}, depth = $curDepth")
@@ -82,20 +73,31 @@ class WikiGameDumbImpl : WikiGame {
 
         visitedPages[page.title] = RESPONSE_RECEIVED
 
+        val ch = Channel<Result<Page>>()
+
         links.forEach {
             // Creates new scope because we don't want to wait for all the coroutines to complete
             coroutineScope.launch {
-                processPage(
+                val coroRes = processPage(
                     Page(it, page),
                     endPageTitle,
                     curDepth + 1,
                     maxDepth,
                     visitedPages,
-                    resChannel,
                     coroutineScope
                 )
+
+                ch.send(coroRes)
             }
         }
 
+        for (i in 1..links.size) {
+            val chRes = ch.receive()
+            if (chRes.isSuccess) {
+                return chRes
+            }
+        }
+
+        return Result.failure(RuntimeException("Depth reached"))
     }
 }
