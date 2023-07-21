@@ -7,6 +7,10 @@
     <groupId>point.rar</groupId>
     <artifactId>wiki-game-common</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>wiki-game-completable-feature</module>
+    </modules>
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
         <maven.compiler.target>19</maven.compiler.target>
@@ -17,6 +21,21 @@
             <groupId>org.asynchttpclient</groupId>
             <artifactId>async-http-client</artifactId>
             <version>3.0.0.Beta1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-ratelimiter</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-serialization-core-jvm</artifactId>
+            <version>1.2.2</version>
         </dependency>
     </dependencies>
 

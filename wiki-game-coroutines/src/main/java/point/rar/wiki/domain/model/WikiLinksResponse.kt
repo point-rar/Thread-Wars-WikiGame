@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class WikiLinksResponse(
-    val query: QueryLinks
+    val query: QueryLinks = QueryLinks(emptyMap())
 )

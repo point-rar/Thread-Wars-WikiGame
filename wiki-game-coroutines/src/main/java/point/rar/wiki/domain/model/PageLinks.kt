@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PageLinks(
-    val links: List<Link>? = null
+    val links: List<Link>? = emptyList()
 )
