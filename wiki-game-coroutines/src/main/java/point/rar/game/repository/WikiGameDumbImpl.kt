@@ -21,7 +21,7 @@ class WikiGameDumbImpl : WikiGame {
 
     private val wikiRemoteDataSource: WikiRemoteDataSource = WikiRemoteDataSourceImpl()
 
-    override fun play(startPageTitle: String, endPageTitle: String, maxDepth: Int): Result<List<String>> = runBlocking {
+    override fun play(startPageTitle: String, endPageTitle: String, maxDepth: Int): List<String> = runBlocking {
         val visitedPages: MutableMap<String, Int> = ConcurrentHashMap()
         val ctx = newFixedThreadPoolContext(4, "fixed-thread-context")
         val scope = CoroutineScope(ctx)
@@ -32,7 +32,7 @@ class WikiGameDumbImpl : WikiGame {
 
         ctx.cancelChildren()
 
-        val endPage = res.getOrNull() ?: return@runBlocking Result.failure(res.exceptionOrNull()!!)
+        val endPage = res.getOrNull() ?: throw res.exceptionOrNull()!!
         val path = mutableListOf<String>()
 
         var curPg: Page? = endPage
@@ -44,7 +44,7 @@ class WikiGameDumbImpl : WikiGame {
         val pagesWithResponseCount = visitedPages.entries.count { it.value == RESPONSE_RECEIVED }
         println("Received responses from $pagesWithResponseCount pages")
 
-        return@runBlocking Result.success(path.reversed())
+        return@runBlocking path.reversed()
     }
 
     private suspend fun processPage(
