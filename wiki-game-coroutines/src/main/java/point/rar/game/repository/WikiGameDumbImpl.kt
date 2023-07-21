@@ -2,16 +2,12 @@ package point.rar.game.repository
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import point.rar.wiki.data.source.WikiRemoteDataSource
 import point.rar.wiki.domain.model.Page
 import point.rar.wiki.remote.WikiRemoteDataSourceImpl
 import java.lang.RuntimeException
+import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.coroutineContext
 
 class WikiGameDumbImpl : WikiGame {
     companion object {
@@ -29,10 +25,13 @@ class WikiGameDumbImpl : WikiGame {
         val startPage = Page(startPageTitle, null)
 
         val res = processPage(startPage, endPageTitle, 0, maxDepth, visitedPages, scope)
+        if (res.isEmpty) {
+            throw RuntimeException("Depth reached")
+        }
 
         ctx.cancelChildren()
 
-        val endPage = res.getOrNull() ?: throw res.exceptionOrNull()!!
+        val endPage = res.get()
         val path = mutableListOf<String>()
 
         var curPg: Page? = endPage
@@ -54,18 +53,18 @@ class WikiGameDumbImpl : WikiGame {
         maxDepth: Int,
         visitedPages: MutableMap<String, Int>,
         coroutineScope: CoroutineScope
-    ): Result<Page> {
+    ): Optional<Page> {
         if (visitedPages.contains(page.title)) {
-            return Result.failure(RuntimeException("Exists"))
+            return Optional.empty()
         }
         visitedPages[page.title] = REQUEST_SENT
 
         if (page.title == endPageTitle) {
-            return Result.success(page)
+            return Optional.of(page)
         }
 
         if (curDepth == maxDepth) {
-            return Result.failure(RuntimeException("Depth reached"))
+            return Optional.empty()
         }
 
 //        println("Started for ${page.title}, depth = $curDepth")
@@ -73,7 +72,7 @@ class WikiGameDumbImpl : WikiGame {
 
         visitedPages[page.title] = RESPONSE_RECEIVED
 
-        val ch = Channel<Result<Page>>()
+        val ch = Channel<Optional<Page>>()
 
         links.forEach {
             // Creates new scope because we don't want to wait for all the coroutines to complete
@@ -93,11 +92,11 @@ class WikiGameDumbImpl : WikiGame {
 
         for (i in 1..links.size) {
             val chRes = ch.receive()
-            if (chRes.isSuccess) {
+            if (chRes.isPresent) {
                 return chRes
             }
         }
 
-        return Result.failure(RuntimeException("Depth reached"))
+        return Optional.empty()
     }
 }
