@@ -25,13 +25,12 @@ public class WikiGameFutureImpl implements WikiGame {
         Queue<Page> rawPages = new ConcurrentLinkedQueue<>(Collections.singleton(startedPage));
         Queue<Page> parsedPages = new ConcurrentLinkedQueue<>();
         Set<String> parsedTitle = new ConcurrentSkipListSet<>();
-        var parentEndPage = startedPage;
 
         ExecutorService executorService = Executors.newCachedThreadPool();
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         do {
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 100; i++) {
                 Page curPage = rawPages.poll();
                 if (curPage == null) {
                     break;
@@ -42,7 +41,14 @@ public class WikiGameFutureImpl implements WikiGame {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             futures.clear();
         } while (!parsedTitle.contains(endPageTitle));
-        parsedPages.add(new Page(endPageTitle, parentEndPage));
+        parsedPages.add(
+                new Page(endPageTitle,
+                        rawPages.stream()
+                                .filter(p -> p.getTitle().equals(endPageTitle))
+                                .findAny()
+                                .orElseThrow()
+                )
+        );
 
         executorService.shutdown();
         return getResultPath(parsedPages, endPageTitle);
@@ -64,10 +70,9 @@ public class WikiGameFutureImpl implements WikiGame {
                 .findAny()
                 .orElseThrow();
         while (curPage.getParentPage() != null) {
-            path.add(curPage.getTitle());
             curPage = curPage.getParentPage();
+            path.add(curPage.getTitle());
         }
-        path.add(curPage.getTitle());
         Collections.reverse(path); // Reverse the order of elements in the list
         return path;
     }
