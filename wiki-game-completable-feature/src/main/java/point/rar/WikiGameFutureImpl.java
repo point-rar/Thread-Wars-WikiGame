@@ -2,6 +2,7 @@ package point.rar;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import point.rar.wiki.domain.model.Link;
 import point.rar.wiki.domain.model.Page;
@@ -9,6 +10,7 @@ import point.rar.wiki.domain.model.WikiLinksResponse;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -27,6 +29,8 @@ public class WikiGameFutureImpl implements WikiGame {
         Set<String> parsedTitle = new ConcurrentSkipListSet<>();
 
         ExecutorService executorService = Executors.newCachedThreadPool();
+//        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+//        ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         do {
@@ -81,18 +85,26 @@ public class WikiGameFutureImpl implements WikiGame {
     private List<String> getChildLinks(String title) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
         try {
-            System.out.println("Get links for: " + title);
+            URIBuilder uriBuilder = new URIBuilder(URL);
+            uriBuilder.addParameter("action", "query");
+            uriBuilder.addParameter("prop", "links");
+            uriBuilder.addParameter("pllimit", "max");
+            uriBuilder.addParameter("format", "json");
+            uriBuilder.addParameter("plnamespace", "titles");
+
+//            System.out.println("Get links for: " + title);
             String responseBody = HttpClient.newBuilder()
                     .build()
-                    .send(HttpRequest.newBuilder()
-                            .uri(URI.create(URL + "?action=query&prop=links&pllimit=max&format=json&plnamespace=0&titles=" + title.replace(" ", "%20")))
+                    .sendAsync(HttpRequest.newBuilder()
+                            .uri(URI.create(uriBuilder.addParameter("titles", title).build().toString()))
                             .GET()
-                            .build(), HttpResponse.BodyHandlers.ofString()).body();
+                            .build(), HttpResponse.BodyHandlers.ofString()).get().body();
             WikiLinksResponse response = objectMapper.readValue(responseBody, WikiLinksResponse.class);
 
             return parseLinks(response);
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException | InterruptedException | URISyntaxException | ExecutionException e) {
             throw new RuntimeException(e);
         }
     }

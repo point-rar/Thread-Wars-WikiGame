@@ -24,7 +24,7 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
     private val rateLimiterConfig = RateLimiterConfig
         .custom()
         .limitForPeriod(1)
-        .limitRefreshPeriod(Duration.ofMillis(40))
+        .limitRefreshPeriod(Duration.ofMillis(3))
         .timeoutDuration(Duration.ofDays(10000))
         .build()
 
