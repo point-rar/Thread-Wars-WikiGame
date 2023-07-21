@@ -56,7 +56,7 @@ class WikiGameDumbImpl : WikiGame {
         coroutineScope: CoroutineScope
     ): Result<Page> {
         if (visitedPages.contains(page.title)) {
-            return Result.success(page)
+            return Result.failure(RuntimeException("Exists"))
         }
         visitedPages[page.title] = REQUEST_SENT
 
