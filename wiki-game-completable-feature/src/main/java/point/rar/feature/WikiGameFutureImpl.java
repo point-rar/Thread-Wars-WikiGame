@@ -1,12 +1,9 @@
-package point.rar;
+package point.rar.feature;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
-import point.rar.wiki.domain.model.Link;
-import point.rar.wiki.domain.model.Page;
-import point.rar.wiki.domain.model.WikiLinksResponse;
 
 import java.io.IOException;
 import java.net.URI;

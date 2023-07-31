@@ -1,4 +1,4 @@
-package point.rar.wiki.domain.model
+package point.rar.common.wiki.domain.model
 
 import kotlinx.serialization.Serializable
 

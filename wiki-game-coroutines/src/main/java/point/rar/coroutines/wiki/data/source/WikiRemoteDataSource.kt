@@ -1,4 +1,4 @@
-package point.rar.wiki.data.source
+package point.rar.coroutines.wiki.data.source
 
 interface WikiRemoteDataSource {
     suspend fun getLinksByTitle(title: String): List<String>

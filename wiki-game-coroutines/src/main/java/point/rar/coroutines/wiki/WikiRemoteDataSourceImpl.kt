@@ -1,4 +1,4 @@
-package point.rar.wiki.remote
+package point.rar.coroutines.wiki
 
 import io.github.resilience4j.kotlin.ratelimiter.executeSuspendFunction
 import io.github.resilience4j.ratelimiter.RateLimiterConfig
@@ -11,9 +11,6 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import point.rar.wiki.data.source.WikiRemoteDataSource
-import point.rar.wiki.domain.model.WikiBacklinksResponse
-import point.rar.wiki.domain.model.WikiLinksResponse
 import java.time.Duration
 
 class WikiRemoteDataSourceImpl : WikiRemoteDataSource {

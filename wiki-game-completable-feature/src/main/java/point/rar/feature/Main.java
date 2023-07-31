@@ -1,4 +1,4 @@
-package point.rar;
+package point.rar.feature;
 
 public class Main {
     public static void main(String[] args) {

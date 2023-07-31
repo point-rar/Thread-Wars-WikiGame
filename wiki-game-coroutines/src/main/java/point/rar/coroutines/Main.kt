@@ -1,7 +1,7 @@
-package point.rar
+package point.rar.coroutines
 
-import point.rar.game.repository.WikiGame
-import point.rar.game.repository.WikiGameDumbImpl
+import point.rar.coroutines.repository.WikiGame
+import point.rar.coroutines.repository.WikiGameDumbImpl
 
 fun main(args: Array<String>) {
     val wikiGame: WikiGame = WikiGameDumbImpl()
