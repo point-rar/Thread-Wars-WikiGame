@@ -11,6 +11,9 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import point.rar.common.wiki.domain.model.WikiBacklinksResponse
+import point.rar.common.wiki.domain.model.WikiLinksResponse
+import point.rar.coroutines.wiki.data.source.WikiRemoteDataSource
 import java.time.Duration
 
 class WikiRemoteDataSourceImpl : WikiRemoteDataSource {

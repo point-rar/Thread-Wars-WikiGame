@@ -2,8 +2,8 @@ package point.rar.coroutines.repository
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import point.rar.common.wiki.domain.model.Page
 import point.rar.coroutines.wiki.data.source.WikiRemoteDataSource
-import point.rar.coroutines.wiki.domain.model.Page
 import point.rar.coroutines.wiki.WikiRemoteDataSourceImpl
 import java.lang.RuntimeException
 import java.util.Optional

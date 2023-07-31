@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
+import point.rar.common.wiki.domain.model.Page;
+import point.rar.common.wiki.domain.model.Link;
+import point.rar.common.wiki.domain.model.WikiLinksResponse;
 
 import java.io.IOException;
 import java.net.URI;
