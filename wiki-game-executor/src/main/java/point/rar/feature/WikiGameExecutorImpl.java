@@ -2,7 +2,12 @@ package point.rar.feature;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.util.concurrent.RateLimiter;
+import io.github.resilience4j.ratelimiter.RateLimiter;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import point.rar.common.wiki.domain.model.Page;
@@ -21,7 +26,13 @@ import java.util.concurrent.*;
 
 public class WikiGameExecutorImpl implements WikiGame {
     private static final String URL = "https://ru.wikipedia.org/w/api.php";
-    private static final RateLimiter rateLimiter = RateLimiter.create(100);
+    private static final RateLimiterConfig config = RateLimiterConfig.custom()
+            .limitRefreshPeriod(Duration.ofMillis(50))
+            .limitForPeriod(10)
+            .timeoutDuration(Duration.ofMillis(5))
+            .build();
+    private static final RateLimiterRegistry rateLimiterRegistry = RateLimiterRegistry.of(config);
+    private static final RateLimiter rateLimiter = rateLimiterRegistry.rateLimiter("rate");
 
     @NotNull
     @Override
@@ -31,18 +42,17 @@ public class WikiGameExecutorImpl implements WikiGame {
         Queue<Page> parsedPages = new ConcurrentLinkedQueue<>();
         Set<String> receivedLinks = new ConcurrentSkipListSet<>();
 
-
-//        ExecutorService exec = Executors.newCachedThreadPool();
-//        ExecutorService exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
         ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
 
         do {
             Page curPage = rawPages.poll();
             if (curPage != null) {
-                exec.execute(() -> makeSearch(curPage, rawPages, parsedPages, receivedLinks));
+                exec.execute(makeSearch(curPage, rawPages, parsedPages, receivedLinks));
             }
+
         } while (!receivedLinks.contains(endPageTitle));
         exec.shutdown();
+        exec.close();
 
         parsedPages.add(
                 new Page(endPageTitle,
@@ -56,17 +66,23 @@ public class WikiGameExecutorImpl implements WikiGame {
         return getResultPath(parsedPages, endPageTitle);
     }
 
-    private void makeSearch(Page curPage, Queue<Page> rawPages, Queue<Page> parsedPages, Set<String> receivedLinks) {
-        List<String> newLinks = getChildLinks(curPage.getTitle());
-        parsedPages.add(curPage);
-        for (String link : newLinks) {
-            if (receivedLinks.add(link)) {
-                rawPages.add(new Page(link, curPage));
+    public static Runnable makeSearch(Page curPage, Queue<Page> rawPages, Queue<Page> parsedPages, Set<String> receivedLinks) {
+        return () -> {
+            List<String> newLinks = getChildLinks(curPage.getTitle());
+            if (newLinks != null) {
+                parsedPages.add(curPage);
+                for (String link : newLinks) {
+                    if (receivedLinks.add(link)) {
+                        rawPages.add(new Page(link, curPage));
+                    }
+                }
+            } else {
+                rawPages.add(curPage);
             }
-        }
+        };
     }
 
-    private List<String> getResultPath(Queue<Page> parsedPages, String endPageTitle) {
+    private static List<String> getResultPath(Queue<Page> parsedPages, String endPageTitle) {
         var path = new ArrayList<String>();
         var curPage = parsedPages.stream()
                 .filter(p -> p.getTitle().equals(endPageTitle))
@@ -81,31 +97,44 @@ public class WikiGameExecutorImpl implements WikiGame {
     }
 
 
-    private List<String> getChildLinks(String title) {
+    private static List<String> getChildLinks(String title) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         try {
-            URIBuilder uriBuilder = new URIBuilder(URL);
-            uriBuilder.addParameter("action", "query");
-            uriBuilder.addParameter("prop", "links");
-            uriBuilder.addParameter("pllimit", "max");
-            uriBuilder.addParameter("format", "json");
-            uriBuilder.addParameter("plnamespace", "titles");
-
-            System.out.println("Get links for: " + title + ", acquire: " + rateLimiter.acquire());
-            String responseBody = HttpClient.newBuilder()
-                    .build()
-                    .sendAsync(HttpRequest.newBuilder()
-                            .uri(URI.create(uriBuilder.addParameter("titles", title).build().toString()))
-                            .GET()
-                            .build(), HttpResponse.BodyHandlers.ofString()).get().body();
+            System.out.println("Get links for: " + title);
+            System.out.println(rateLimiter.getMetrics().getAvailablePermissions());
+            URIBuilder uriBuilder = getUriBuilder();
+            String responseBody = makeRequest(title, uriBuilder);
             WikiLinksResponse response = objectMapper.readValue(responseBody, WikiLinksResponse.class);
 
             return parseLinks(response);
-        } catch (IOException | InterruptedException | URISyntaxException | ExecutionException e) {
-            throw new RuntimeException(e);
+        } catch (Throwable e) {
+            return null;
         }
+    }
+
+    private static String makeRequest(String title, URIBuilder uriBuilder) throws Throwable {
+        return RateLimiter.decorateCheckedSupplier(rateLimiter, () -> HttpClient.newBuilder()
+                .build()
+                .sendAsync(HttpRequest.newBuilder()
+                                .uri(URI.create(uriBuilder.addParameter("titles", title).build().toString()))
+                                .GET()
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString())
+                .get()
+                .body()).get();
+    }
+
+    @NotNull
+    private static URIBuilder getUriBuilder() throws URISyntaxException {
+        URIBuilder uriBuilder = new URIBuilder(URL);
+        uriBuilder.addParameter("action", "query");
+        uriBuilder.addParameter("prop", "links");
+        uriBuilder.addParameter("pllimit", "max");
+        uriBuilder.addParameter("format", "json");
+        uriBuilder.addParameter("plnamespace", "titles");
+        return uriBuilder;
     }
 
     @NotNull
