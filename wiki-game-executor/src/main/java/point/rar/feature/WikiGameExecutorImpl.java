@@ -5,16 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
-import io.github.resilience4j.retry.Retry;
-import io.github.resilience4j.retry.RetryConfig;
-import io.github.resilience4j.retry.RetryRegistry;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import point.rar.common.wiki.domain.model.Page;
 import point.rar.common.wiki.domain.model.Link;
 import point.rar.common.wiki.domain.model.WikiLinksResponse;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
@@ -23,6 +19,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WikiGameExecutorImpl implements WikiGame {
     private static final String URL = "https://ru.wikipedia.org/w/api.php";
@@ -33,6 +30,8 @@ public class WikiGameExecutorImpl implements WikiGame {
             .build();
     private static final RateLimiterRegistry rateLimiterRegistry = RateLimiterRegistry.of(config);
     private static final RateLimiter rateLimiter = rateLimiterRegistry.rateLimiter("rate");
+
+    private static AtomicBoolean isFinished = new AtomicBoolean(false);
 
     @NotNull
     @Override
@@ -45,12 +44,8 @@ public class WikiGameExecutorImpl implements WikiGame {
         ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
 
         do {
-            Page curPage = rawPages.poll();
-            if (curPage != null) {
-                exec.execute(makeSearch(curPage, rawPages, parsedPages, receivedLinks));
-            }
-
-        } while (!receivedLinks.contains(endPageTitle));
+            exec.execute(makeSearch(rawPages, parsedPages, receivedLinks, endPageTitle));
+        } while (!isFinished.get());
         exec.shutdown();
         exec.close();
 
@@ -66,18 +61,25 @@ public class WikiGameExecutorImpl implements WikiGame {
         return getResultPath(parsedPages, endPageTitle);
     }
 
-    public static Runnable makeSearch(Page curPage, Queue<Page> rawPages, Queue<Page> parsedPages, Set<String> receivedLinks) {
+    public static Runnable makeSearch(Queue<Page> rawPages, Queue<Page> parsedPages, Set<String> receivedLinks, String endPageTitle) {
         return () -> {
-            List<String> newLinks = getChildLinks(curPage.getTitle());
-            if (newLinks != null) {
-                parsedPages.add(curPage);
-                for (String link : newLinks) {
-                    if (receivedLinks.add(link)) {
-                        rawPages.add(new Page(link, curPage));
+            Page curPage = rawPages.poll();
+            if (curPage != null) {
+                List<String> newLinks = getChildLinks(curPage.getTitle());
+                if (newLinks != null) {
+                    parsedPages.add(curPage);
+                    for (String link : newLinks) {
+                        if (receivedLinks.add(link)) {
+                            rawPages.add(new Page(link, curPage));
+                        }
+                        if (endPageTitle.equals(link)) {
+                            isFinished.set(true);
+                            break;
+                        }
                     }
+                } else {
+                    rawPages.add(curPage);
                 }
-            } else {
-                rawPages.add(curPage);
             }
         };
     }
