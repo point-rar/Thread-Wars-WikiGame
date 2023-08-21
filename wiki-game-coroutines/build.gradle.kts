@@ -10,10 +10,13 @@ group = "point.rar"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
+    implementation("point.rar.common:wiki-game-common:2.0")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.2")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
     implementation(kotlin("stdlib-jdk8"))
