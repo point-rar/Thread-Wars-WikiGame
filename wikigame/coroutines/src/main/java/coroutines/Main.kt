@@ -1,10 +1,10 @@
 package coroutines
 
 import coroutines.repository.WikiGame
-import coroutines.repository.WikiGameDumbImpl
+import coroutines.repository.WikiGameCoroImpl
 
 fun main(args: Array<String>) {
-    val wikiGame: WikiGame = WikiGameDumbImpl()
+    val wikiGame: WikiGame = WikiGameCoroImpl()
 
     val start = System.nanoTime()
     val path = wikiGame.play("Бакуган", "Библия", maxDepth = 6)
