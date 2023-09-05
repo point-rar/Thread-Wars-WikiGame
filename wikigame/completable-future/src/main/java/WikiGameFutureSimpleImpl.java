@@ -6,6 +6,7 @@ import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import point.rar.model.*;
+import point.rar.repository.WikiGame;
 
 import java.io.IOException;
 import java.net.URI;

@@ -11,7 +11,6 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import coroutines.wiki.data.source.WikiRemoteDataSource
 import point.rar.model.WikiBacklinksResponse
 import point.rar.model.WikiLinksResponse
 import java.time.Duration
@@ -51,6 +50,8 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
                 parameter("plnamespace", 0)
             }
         }
+
+        println("got response from $title")
 
         val wikiLinksResponse: WikiLinksResponse = response.body()
 

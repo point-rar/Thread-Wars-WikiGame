@@ -2,6 +2,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
 import point.rar.model.*;
+import point.rar.repository.WikiGame;
+import point.rar.wiki.WikiRemoteDataSource;
+import point.rar.wiki.WikiRemoteDataSourceImpl;
 
 import java.io.IOException;
 import java.net.URI;
@@ -12,6 +15,8 @@ import java.util.*;
 
 public class WikiGameSerialImpl implements WikiGame {
     private static final String URL = "https://ru.wikipedia.org/w/api.php";
+
+    private final WikiRemoteDataSource wikiRemoteDataSource = new WikiRemoteDataSourceImpl();
 
     @NotNull
     @Override
@@ -27,7 +32,7 @@ public class WikiGameSerialImpl implements WikiGame {
             System.out.println("parsedTitle size =  " + parsedTitle.size());
             var curPage = rawPages.poll();
             parentEndPage = curPage;
-            var newLinks = parseLinks(curPage.getTitle());
+            var newLinks = wikiRemoteDataSource.getLinksByTitle(curPage.getTitle());
             parsedPages.add(curPage);
             parsedTitle.addAll(newLinks);
             rawPages.addAll(
@@ -53,33 +58,5 @@ public class WikiGameSerialImpl implements WikiGame {
         }
         path.add(curPage.getTitle());
         return path;
-    }
-
-
-    private List<String> parseLinks(String title) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        try {
-            System.out.println("Get links for: " + title);
-            String responseBody = HttpClient.newBuilder()
-                    .build()
-                    .send(HttpRequest.newBuilder()
-                            .uri(URI.create(URL + "?action=query&prop=links&pllimit=max&format=json&plnamespace=0&titles=" + title.replace(" ", "%20")))
-                            .GET()
-                            .build(), HttpResponse.BodyHandlers.ofString()).body();
-            WikiLinksResponse response = objectMapper.readValue(responseBody, WikiLinksResponse.class);
-
-            return parseLinks(response);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @NotNull
-    private static List<String> parseLinks(WikiLinksResponse response) {
-        return response.getQuery().getPages().entrySet().iterator().next().getValue().getLinks()
-                .stream()
-                .map(Link::getTitle)
-                .toList();
     }
 }

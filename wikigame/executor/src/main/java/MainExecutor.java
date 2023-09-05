@@ -1,3 +1,5 @@
+import point.rar.repository.WikiGame;
+
 public class MainExecutor {
     public static void main(String[] args) {
         long startTime = System.currentTimeMillis();
