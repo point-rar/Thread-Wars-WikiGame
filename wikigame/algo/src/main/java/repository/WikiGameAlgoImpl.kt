@@ -193,7 +193,7 @@ class WikiGameAlgoImpl : WikiGame {
         }
 
         val backwardPages = mutableListOf<BackwardPage>()
-        var curBwdPage: BackwardPage? = backwardPage
+        var curBwdPage: BackwardPage? = backwardPage.childPage
         do {
             backwardPages.add(curBwdPage!!)
             curBwdPage = curBwdPage.childPage
