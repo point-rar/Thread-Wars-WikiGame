@@ -5,3 +5,4 @@ rootProject.name = "wikigame"
 include("coroutines")
 include("executor")
 include("completable-future")
+include("algo")

@@ -1,4 +1,4 @@
-package coroutines.wiki
+package point.rar.wikisuspend
 
 interface WikiRemoteDataSource {
     suspend fun getLinksByTitle(title: String): List<String>

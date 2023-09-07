@@ -1,4 +1,4 @@
-package coroutines.wiki
+package point.rar.wikisuspend
 
 import io.github.resilience4j.kotlin.ratelimiter.executeSuspendFunction
 import io.github.resilience4j.ratelimiter.RateLimiterConfig
