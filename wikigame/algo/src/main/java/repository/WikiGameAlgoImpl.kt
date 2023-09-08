@@ -4,7 +4,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import model.BackwardPage
 import model.ForwardPage
-import point.rar.model.Page
 import point.rar.repository.WikiGame
 import point.rar.wikisuspend.WikiRemoteDataSource
 import point.rar.wikisuspend.WikiRemoteDataSourceImpl
@@ -16,31 +15,22 @@ class WikiGameAlgoImpl : WikiGame {
 
     private val wikiRemoteDataSource: WikiRemoteDataSource = WikiRemoteDataSourceImpl()
     override fun play(startPageTitle: String, endPageTitle: String, maxDepth: Int): List<String> {
-        val res = process(startPageTitle, endPageTitle, maxDepth)
-        if (res.isEmpty) {
+        val pathOpt = process(startPageTitle, endPageTitle, maxDepth)
+        if (pathOpt.isEmpty) {
             throw RuntimeException("Could not find")
         }
-
-        val endPage = res.get()
-        val path = mutableListOf<String>()
-
-        var curPg: Page? = endPage
-        do {
-            path.add(curPg!!.title)
-            curPg = curPg.parentPage
-        } while (curPg != null)
 
 //        val pagesWithResponseCount = visitedPages.entries.count { it.value == RESPONSE_RECEIVED }
 //        println("Received responses from $pagesWithResponseCount pages")
 
-        return path.reversed()
+        return pathOpt.get()
     }
 
     private fun process(
         startPageTitle: String,
         endPageTitle: String,
         maxDepth: Int,
-    ): Optional<Page> = runBlocking {
+    ): Optional<List<String>> = runBlocking {
         val visitedForwardPages: MutableMap<String, ForwardPage> = ConcurrentHashMap()
         val visitedBackwardPages: MutableMap<String, BackwardPage> = ConcurrentHashMap()
         val ctx = newFixedThreadPoolContext(4, "fixed-thread-context")
@@ -80,7 +70,7 @@ class WikiGameAlgoImpl : WikiGame {
             val res = ch.receive()
             if (res.isPresent) {
                 val pair = res.get()
-                return@runBlocking Optional.of(getFinalPageFromForwardAndBackward(pair.first, pair.second))
+                return@runBlocking Optional.of(getFinalPathFromForwardAndBackward(pair.first, pair.second))
             }
         }
 
@@ -195,7 +185,9 @@ class WikiGameAlgoImpl : WikiGame {
         return Optional.empty()
     }
 
-    private fun getFinalPageFromForwardAndBackward(forwardPage: ForwardPage, backwardPage: BackwardPage): Page {
+    private fun getFinalPathFromForwardAndBackward(forwardPage: ForwardPage, backwardPage: BackwardPage): List<String> {
+        val path = mutableListOf<String>()
+
         val forwardPages = mutableListOf<ForwardPage>()
         var curFwdPage: ForwardPage? = forwardPage
         while (curFwdPage != null) {
@@ -203,22 +195,16 @@ class WikiGameAlgoImpl : WikiGame {
             curFwdPage = curFwdPage.parentPage
         }
 
-        var lastPage: Page? = null
         for (fwdPg in forwardPages.reversed()) {
-            lastPage = Page(fwdPg.title, lastPage)
+            path.add(fwdPg.title)
         }
 
-        val backwardPages = mutableListOf<BackwardPage>()
         var curBwdPage: BackwardPage? = backwardPage.childPage
         while (curBwdPage != null) {
-            backwardPages.add(curBwdPage)
+            path.add(curBwdPage.title)
             curBwdPage = curBwdPage.childPage
         }
 
-        for (bwdPg in backwardPages) {
-            lastPage = Page(bwdPg.title, lastPage)
-        }
-
-        return lastPage!!
+        return path
     }
 }
