@@ -67,16 +67,18 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
     }
 
     override suspend fun getBacklinksByTitle(title: String): List<String> {
-        val request = client.get(URL) {
-            parameter("action", "query")
-            parameter("bltitle", title)
-            parameter("list", "backlinks")
-            parameter("bllimit", "max")
-            parameter("format", "json")
-            parameter("blnamespace", 0)
+        val response = rateLimiter.executeSuspendFunction {
+            client.get(URL) {
+                parameter("action", "query")
+                parameter("bltitle", title)
+                parameter("list", "backlinks")
+                parameter("bllimit", "max")
+                parameter("format", "json")
+                parameter("blnamespace", 0)
+            }
         }
 
-        val wikiBacklinksResponse: WikiBacklinksResponse = request.body()
+        val wikiBacklinksResponse: WikiBacklinksResponse = response.body()
 
         return wikiBacklinksResponse
             .query

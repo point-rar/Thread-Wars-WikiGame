@@ -52,11 +52,27 @@ class WikiGameAlgoImpl : WikiGame {
         val ch = Channel<Optional<Pair<ForwardPage, BackwardPage>>>()
 
         scope.launch {
-            val res = processPageForward(startForwardPage, endPageTitle, 0, maxDepth, visitedForwardPages, visitedBackwardPages, scope)
+            val res = processPageForward(
+                startForwardPage,
+                endPageTitle,
+                0,
+                maxDepth,
+                visitedForwardPages,
+                visitedBackwardPages,
+                scope
+            )
             ch.send(res)
         }
         scope.launch {
-            val res = processPageBackward(endBackwardPage, endPageTitle, 0, maxDepth, visitedForwardPages, visitedBackwardPages, scope)
+            val res = processPageBackward(
+                endBackwardPage,
+                endPageTitle,
+                0,
+                maxDepth,
+                visitedForwardPages,
+                visitedBackwardPages,
+                scope
+            )
             ch.send(res)
         }
 
@@ -179,13 +195,13 @@ class WikiGameAlgoImpl : WikiGame {
         return Optional.empty()
     }
 
-    fun getFinalPageFromForwardAndBackward(forwardPage: ForwardPage, backwardPage: BackwardPage): Page {
+    private fun getFinalPageFromForwardAndBackward(forwardPage: ForwardPage, backwardPage: BackwardPage): Page {
         val forwardPages = mutableListOf<ForwardPage>()
         var curFwdPage: ForwardPage? = forwardPage
-        do {
-            forwardPages.add(curFwdPage!!)
+        while (curFwdPage != null) {
+            forwardPages.add(curFwdPage)
             curFwdPage = curFwdPage.parentPage
-        } while(curFwdPage != null)
+        }
 
         var lastPage: Page? = null
         for (fwdPg in forwardPages.reversed()) {
@@ -194,10 +210,10 @@ class WikiGameAlgoImpl : WikiGame {
 
         val backwardPages = mutableListOf<BackwardPage>()
         var curBwdPage: BackwardPage? = backwardPage.childPage
-        do {
-            backwardPages.add(curBwdPage!!)
+        while (curBwdPage != null) {
+            backwardPages.add(curBwdPage)
             curBwdPage = curBwdPage.childPage
-        } while(curBwdPage != null)
+        }
 
         for (bwdPg in backwardPages) {
             lastPage = Page(bwdPg.title, lastPage)
