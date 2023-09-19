@@ -11,6 +11,10 @@ import java.lang.RuntimeException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Two-way algo version written in Kotlin.
+ * Use Loom version instead.
+ */
 class WikiGameAlgoImpl : WikiGame {
 
     private val wikiRemoteDataSource: WikiRemoteDataSource = WikiRemoteDataSourceImpl()
