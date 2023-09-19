@@ -8,6 +8,7 @@ import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import rar.kotlin.model.Link;
+import rar.kotlin.model.WikiBacklinksResponse;
 import rar.kotlin.model.WikiLinksResponse;
 
 import java.net.URISyntaxException;
@@ -45,7 +46,7 @@ public class WikiRemoteDataSourceImpl implements WikiRemoteDataSource {
                     )
                     .body()
             ).get();
-            System.out.println("Got links from: " + title);
+//            System.out.println("Got links from: " + title);
             WikiLinksResponse response = objectMapper.readValue(responseBody, WikiLinksResponse.class);
 
             return parseResponse(response);
@@ -76,6 +77,42 @@ public class WikiRemoteDataSourceImpl implements WikiRemoteDataSource {
 
     @Override
     public List<String> getBacklinksByTitle(String title) {
-        return null;
+        try {
+            String responseBody = RateLimiter.decorateCheckedSupplier(rateLimiter, () ->
+                    HttpClient.newBuilder()
+                            .build()
+                            .send(
+                                    HttpRequest.newBuilder()
+                                            .uri(getBacklinksUriBuilder(title).build())
+                                            .GET()
+                                            .build(),
+                                    HttpResponse.BodyHandlers.ofString()
+                            )
+                            .body()
+            ).get();
+//            System.out.println("Got links from: " + title);
+            WikiBacklinksResponse response = objectMapper.readValue(responseBody, WikiBacklinksResponse.class);
+
+            return parseBacklinksResponse(response);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @NotNull
+    private static URIBuilder getBacklinksUriBuilder(String title) throws URISyntaxException {
+        URIBuilder uriBuilder = new URIBuilder(URL);
+        uriBuilder.addParameter("action", "query");
+        uriBuilder.addParameter("bltitle", title);
+        uriBuilder.addParameter("list", "backlinks");
+        uriBuilder.addParameter("bllimit", "max");
+        uriBuilder.addParameter("format", "json");
+        uriBuilder.addParameter("blnamespace", "0");
+        return uriBuilder;
+    }
+
+    @NotNull
+    private static List<String> parseBacklinksResponse(WikiBacklinksResponse response) {
+        return response.getQuery().getBacklinks().stream().map(Link::getTitle).toList();
     }
 }
