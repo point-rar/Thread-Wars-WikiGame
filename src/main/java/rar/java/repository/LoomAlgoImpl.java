@@ -14,17 +14,9 @@ public class LoomAlgoImpl implements WikiGame {
     private record PairPages(ForwardPage forwardPage, BackwardPage backwardPage) {}
 
     private final WikiRemoteDataSource wikiRemoteDataSource = new WikiRemoteDataSourceImpl();
+
     @Override
-    public List<String> play(String startPageTitle, String endPageTitle, int maxDepth) {
-        var pathOpt = process(startPageTitle, endPageTitle, maxDepth);
-        if (pathOpt.isEmpty()) {
-            throw new RuntimeException("Could not find");
-        }
-
-        return pathOpt.get();
-    }
-
-    private Optional<List<String>> process(
+    public List<String> play(
             String startPageTitle,
             String endPageTitle,
             int maxDepth
@@ -72,12 +64,12 @@ public class LoomAlgoImpl implements WikiGame {
                 var res = queue.take();
                 if (res.isPresent()) {
                     var pair = res.get();
-                    return Optional.of(getFinalPathFromForwardAndBackward(pair.forwardPage, pair.backwardPage));
+                    return getFinalPathFromForwardAndBackward(pair.forwardPage, pair.backwardPage);
                 }
             } catch (Throwable e) {}
         }
 
-        return Optional.empty();
+        throw new RuntimeException("Could not find");
     }
 
     private Optional<PairPages> processPageForward(
