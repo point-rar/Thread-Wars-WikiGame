@@ -11,18 +11,14 @@ import java.util.concurrent.*;
 public class LoomImpl implements WikiGame {
 
     private final WikiRemoteDataSource wikiRemoteDataSource = new WikiRemoteDataSourceImpl();
+
     @Override
     public List<String> play(String startPageTitle, String endPageTitle, int maxDepth) {
         var visitedPages = new ConcurrentHashMap<String, Boolean>();
 
         var startPage = new Page(startPageTitle, null);
 
-        Page resultPage;
-        try {
-            resultPage = processPage(startPage, endPageTitle, 0, maxDepth, visitedPages);
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
+        Page resultPage = processPage(startPage, endPageTitle, 0, maxDepth, visitedPages);
 
         var path = new ArrayList<String>();
 
@@ -42,7 +38,7 @@ public class LoomImpl implements WikiGame {
         int curDepth,
         int maxDepth,
         Map<String, Boolean> visitedPages
-    ) throws InterruptedException, ExecutionException {
+    ) {
         if (visitedPages.putIfAbsent(page.getTitle(), true) != null) {
             throw new RuntimeException("Already visited");
         }
@@ -57,12 +53,12 @@ public class LoomImpl implements WikiGame {
 
         var links = wikiRemoteDataSource.getLinksByTitle(page.getTitle());
 
-        try(var scope = new StructuredTaskScope.ShutdownOnSuccess<Page>()) {
+        try (var scope = new StructuredTaskScope.ShutdownOnSuccess<Page>()) {
             links.forEach((link) -> {
                 scope.fork(() -> processPage(
                         new Page(link, page),
                         endPageTitle,
-                        curDepth+1,
+                        curDepth + 1,
                         maxDepth,
                         visitedPages
                     )
@@ -72,6 +68,8 @@ public class LoomImpl implements WikiGame {
             scope.join();
 
             return scope.result();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         }
     }
 }
