@@ -1,4 +1,4 @@
-package rar.java.wiki;
+package rar.java.wiki.data.source;
 
 import java.util.List;
 
