@@ -50,7 +50,7 @@ tasks.test {
     useJUnitPlatform()
 }
 tasks.withType<JavaCompile> {
-    options.compilerArgs.add("--enable-preview")
+    options.compilerArgs.addAll(listOf("--enable-preview", "--add-modules", "jdk.incubator.concurrent"))
 }
 kotlin {
     jvmToolchain(19)
