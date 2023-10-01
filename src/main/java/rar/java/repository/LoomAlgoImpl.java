@@ -39,15 +39,13 @@ public class LoomAlgoImpl implements WikiGame {
                 visitedBackwardPages
             ));
 
-            scope.fork(() -> {
-                return processPageBackward(
-                    endBackwardPage,
-                    0,
-                    maxDepth,
-                    visitedForwardPages,
-                    visitedBackwardPages
-                );
-            });
+            scope.fork(() -> processPageBackward(
+                endBackwardPage,
+                0,
+                maxDepth,
+                visitedForwardPages,
+                visitedBackwardPages
+            ));
 
             scope.join();
 

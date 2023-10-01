@@ -17,7 +17,7 @@ import java.time.Duration
 
 class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
     companion object Parameter {
-        val URL = "https://ru.wikipedia.org/w/api.php"
+        const val URL = "https://ru.wikipedia.org/w/api.php"
     }
 
     private val rateLimiterConfig = RateLimiterConfig
@@ -50,8 +50,6 @@ class WikiRemoteDataSourceImpl : WikiRemoteDataSource {
                 parameter("plnamespace", 0)
             }
         }
-
-        println("got response from $title")
 
         val wikiLinksResponse: WikiLinksResponse = response.body()
 
