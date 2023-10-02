@@ -23,7 +23,7 @@ public class WikiGameExecutorImpl implements WikiGame {
         Queue<Page> parsedPages = new ConcurrentLinkedQueue<>();
         Set<String> receivedLinks = new ConcurrentSkipListSet<>();
 
-        ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
+        ExecutorService exec = Executors.newCachedThreadPool();
 
         do {
             exec.execute(makeSearch(rawPages, parsedPages, receivedLinks, endPageTitle));
