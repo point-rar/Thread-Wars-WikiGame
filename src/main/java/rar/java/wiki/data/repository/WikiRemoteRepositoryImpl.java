@@ -5,11 +5,11 @@ import rar.java.wiki.domain.repository.WikiRepository;
 
 import java.util.List;
 
-public class WikiRepositoryImpl implements WikiRepository {
+public class WikiRemoteRepositoryImpl implements WikiRepository {
 
     private final WikiRemoteDataSource wikiRemoteDataSource;
 
-    public WikiRepositoryImpl(WikiRemoteDataSource wikiRemoteDataSource) {
+    public WikiRemoteRepositoryImpl(WikiRemoteDataSource wikiRemoteDataSource) {
         this.wikiRemoteDataSource = wikiRemoteDataSource;
     }
 

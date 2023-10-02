@@ -1,6 +1,6 @@
 package rar.java;
 
-import rar.java.wiki.data.repository.WikiRepositoryImpl;
+import rar.java.wiki.data.repository.WikiRemoteRepositoryImpl;
 import rar.java.wiki.data.source.WikiRemoteDataSource;
 import rar.java.wiki.domain.repository.WikiRepository;
 import rar.java.wiki.remote.WikiRemoteDataSourceImpl;
@@ -9,7 +9,7 @@ import rar.java.repository.*;
 public class Main {
     public static void main(String[] args) {
         WikiRemoteDataSource wikiRemoteDataSource = new WikiRemoteDataSourceImpl();
-        WikiRepository wikiRepository = new WikiRepositoryImpl(wikiRemoteDataSource);
+        WikiRepository wikiRepository = new WikiRemoteRepositoryImpl(wikiRemoteDataSource);
 
         long startTime = System.currentTimeMillis();
 
