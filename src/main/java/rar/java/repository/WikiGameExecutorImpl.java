@@ -18,18 +18,18 @@ public class WikiGameExecutorImpl implements WikiGame {
     @NotNull
     @Override
     public List<String> play(@NotNull String startPageTitle, @NotNull String endPageTitle, int maxDepth) {
-        var startedPage = new Page(startPageTitle, null);
-        Queue<Page> rawPages = new ConcurrentLinkedQueue<>(Collections.singleton(startedPage));
+        var startPage = new Page(startPageTitle, null);
+        Queue<Page> rawPages = new ConcurrentLinkedQueue<>(Collections.singleton(startPage));
         Queue<Page> parsedPages = new ConcurrentLinkedQueue<>();
         Set<String> receivedLinks = new ConcurrentSkipListSet<>();
 
-        ExecutorService exec = Executors.newCachedThreadPool();
+        var executor = Executors.newCachedThreadPool();
 
         do {
-            exec.execute(makeSearch(rawPages, parsedPages, receivedLinks, endPageTitle));
+            executor.execute(makeSearch(rawPages, parsedPages, receivedLinks, endPageTitle));
         } while (!isFinished.get());
-        exec.shutdown();
-        exec.close();
+        executor.shutdown();
+        executor.close();
 
         parsedPages.add(
                 new Page(endPageTitle,
@@ -45,14 +45,14 @@ public class WikiGameExecutorImpl implements WikiGame {
 
     public Runnable makeSearch(Queue<Page> rawPages, Queue<Page> parsedPages, Set<String> receivedLinks, String endPageTitle) {
         return () -> {
-            Page curPage = rawPages.poll();
-            if (curPage != null) {
-                List<String> newLinks = wikiRemoteDataSource.getLinksByTitle(curPage.getTitle());
+            Page currentPage = rawPages.poll();
+            if (currentPage != null) {
+                List<String> newLinks = wikiRemoteDataSource.getLinksByTitle(currentPage.getTitle());
                 if (newLinks != null) {
-                    parsedPages.add(curPage);
+                    parsedPages.add(currentPage);
                     for (String link : newLinks) {
                         if (receivedLinks.add(link)) {
-                            rawPages.add(new Page(link, curPage));
+                            rawPages.add(new Page(link, currentPage));
                         }
                         if (endPageTitle.equals(link)) {
                             isFinished.set(true);
@@ -60,7 +60,7 @@ public class WikiGameExecutorImpl implements WikiGame {
                         }
                     }
                 } else {
-                    rawPages.add(curPage);
+                    rawPages.add(currentPage);
                 }
             }
         };
@@ -68,13 +68,13 @@ public class WikiGameExecutorImpl implements WikiGame {
 
     private static List<String> getResultPath(Queue<Page> parsedPages, String endPageTitle) {
         var path = new ArrayList<String>();
-        var curPage = parsedPages.stream()
+        var currentPage = parsedPages.stream()
                 .filter(p -> p.getTitle().equals(endPageTitle))
                 .findAny()
                 .orElseThrow();
-        while (curPage.getParentPage() != null) {
-            curPage = curPage.getParentPage();
-            path.add(curPage.getTitle());
+        while (currentPage.getParentPage() != null) {
+            currentPage = currentPage.getParentPage();
+            path.add(currentPage.getTitle());
         }
         Collections.reverse(path); // Reverse the order of elements in the list
         return path;
