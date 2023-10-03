@@ -1,8 +1,8 @@
 package rar.java.repository;
 
 import org.jetbrains.annotations.NotNull;
-import rar.java.wiki.WikiRemoteDataSource;
-import rar.java.wiki.WikiRemoteDataSourceImpl;
+import rar.java.wiki.data.source.WikiRemoteDataSource;
+import rar.java.wiki.remote.WikiRemoteDataSourceImpl;
 import rar.kotlin.model.Page;
 
 import java.util.*;

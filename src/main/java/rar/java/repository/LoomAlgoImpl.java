@@ -1,13 +1,12 @@
 package rar.java.repository;
 
 import jdk.incubator.concurrent.StructuredTaskScope;
-import rar.java.wiki.WikiRemoteDataSource;
-import rar.java.wiki.WikiRemoteDataSourceImpl;
+import rar.java.wiki.data.source.WikiRemoteDataSource;
+import rar.java.wiki.domain.repository.WikiRepository;
+import rar.java.wiki.remote.WikiRemoteDataSourceImpl;
 import rar.kotlin.model.BackwardPage;
 import rar.kotlin.model.ForwardPage;
-import rar.kotlin.model.Page;
 
-import java.awt.print.PageFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -16,7 +15,11 @@ public class LoomAlgoImpl implements WikiGame {
     private record PairPages(ForwardPage forwardPage, BackwardPage backwardPage) {
     }
 
-    private final WikiRemoteDataSource wikiRemoteDataSource = new WikiRemoteDataSourceImpl();
+    private final WikiRepository wikiRepository;
+
+    public LoomAlgoImpl(WikiRepository wikiRepository) {
+        this.wikiRepository = wikiRepository;
+    }
 
     @Override
     public List<String> play(
@@ -77,7 +80,7 @@ public class LoomAlgoImpl implements WikiGame {
             throw new RuntimeException("Depth reached");
         }
 
-        var links = wikiRemoteDataSource.getLinksByTitle(page.getTitle());
+        var links = wikiRepository.getLinksByTitle(page.getTitle());
 
         try (var scope = new StructuredTaskScope.ShutdownOnSuccess<PairPages>()) {
             links.forEach((link) -> {
@@ -119,7 +122,7 @@ public class LoomAlgoImpl implements WikiGame {
             throw new RuntimeException("Depth reached");
         }
 
-        var backlinks = wikiRemoteDataSource.getBacklinksByTitle(page.getTitle());
+        var backlinks = wikiRepository.getBacklinksByTitle(page.getTitle());
 
         try (var scope = new StructuredTaskScope.ShutdownOnSuccess<PairPages>()) {
             backlinks.forEach((link) -> {

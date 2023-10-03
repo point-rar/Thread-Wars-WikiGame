@@ -1,8 +1,7 @@
 package rar.java.repository;
 
 import jdk.incubator.concurrent.StructuredTaskScope;
-import rar.java.wiki.WikiRemoteDataSource;
-import rar.java.wiki.WikiRemoteDataSourceImpl;
+import rar.java.wiki.domain.repository.WikiRepository;
 import rar.kotlin.model.Page;
 
 import java.util.*;
@@ -10,7 +9,11 @@ import java.util.concurrent.*;
 
 public class LoomImpl implements WikiGame {
 
-    private final WikiRemoteDataSource wikiRemoteDataSource = new WikiRemoteDataSourceImpl();
+    private final WikiRepository wikiRepository;
+
+    public LoomImpl(WikiRepository wikiRepository) {
+        this.wikiRepository = wikiRepository;
+    }
 
     @Override
     public List<String> play(String startPageTitle, String endPageTitle, int maxDepth) {
@@ -51,7 +54,7 @@ public class LoomImpl implements WikiGame {
             throw new RuntimeException("Depth reached");
         }
 
-        var links = wikiRemoteDataSource.getLinksByTitle(page.getTitle());
+        var links = wikiRepository.getLinksByTitle(page.getTitle());
 
         try (var scope = new StructuredTaskScope.ShutdownOnSuccess<Page>()) {
             links.forEach((link) -> {

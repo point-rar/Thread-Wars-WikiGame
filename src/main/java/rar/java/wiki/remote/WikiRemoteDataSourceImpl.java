@@ -1,4 +1,4 @@
-package rar.java.wiki;
+package rar.java.wiki.remote;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +7,7 @@ import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
+import rar.java.wiki.data.source.WikiRemoteDataSource;
 import rar.kotlin.model.Link;
 import rar.kotlin.model.WikiBacklinksResponse;
 import rar.kotlin.model.WikiLinksResponse;
@@ -22,33 +23,32 @@ public class WikiRemoteDataSourceImpl implements WikiRemoteDataSource {
     private static final String URL = "https://ru.wikipedia.org/w/api.php";
 
     private static final RateLimiterConfig config = RateLimiterConfig.custom()
-            .limitRefreshPeriod(Duration.ofMillis(40))
-            .limitForPeriod(1)
-            .timeoutDuration(Duration.ofDays(100000))
-            .build();
+        .limitRefreshPeriod(Duration.ofMillis(40))
+        .limitForPeriod(1)
+        .timeoutDuration(Duration.ofDays(100000))
+        .build();
     private static final RateLimiterRegistry rateLimiterRegistry = RateLimiterRegistry.of(config);
     private static final RateLimiter rateLimiter = rateLimiterRegistry.rateLimiter("rate");
     private static final ObjectMapper objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    private static final HttpClient httpClient = HttpClient.newHttpClient();
 
     @Override
     public List<String> getLinksByTitle(String title) {
         try {
             String responseBody = RateLimiter.decorateCheckedSupplier(rateLimiter, () ->
-                    HttpClient.newBuilder()
-                    .build()
-                    .send(
-                            HttpRequest.newBuilder()
-                                .uri(getUriBuilder(title).build())
-                                .GET()
-                                .build(),
-                            HttpResponse.BodyHandlers.ofString()
+                httpClient.send(
+                        HttpRequest.newBuilder()
+                            .uri(getUriBuilder(title).build())
+                            .GET()
+                            .build(),
+                        HttpResponse.BodyHandlers.ofString()
                     )
                     .body()
             ).get();
-//            System.out.println("Got links from: " + title);
-            WikiLinksResponse response = objectMapper.readValue(responseBody, WikiLinksResponse.class);
 
+            WikiLinksResponse response = objectMapper.readValue(responseBody, WikiLinksResponse.class);
             return parseResponse(response);
         } catch (Throwable e) {
             throw new RuntimeException(e);
@@ -70,27 +70,24 @@ public class WikiRemoteDataSourceImpl implements WikiRemoteDataSource {
     @NotNull
     private static List<String> parseResponse(WikiLinksResponse response) {
         return response.getQuery().getPages().entrySet().iterator().next().getValue().getLinks()
-                .stream()
-                .map(Link::getTitle)
-                .toList();
+            .stream()
+            .map(Link::getTitle)
+            .toList();
     }
 
     @Override
     public List<String> getBacklinksByTitle(String title) {
         try {
             String responseBody = RateLimiter.decorateCheckedSupplier(rateLimiter, () ->
-                    HttpClient.newBuilder()
-                            .build()
-                            .send(
-                                    HttpRequest.newBuilder()
-                                            .uri(getBacklinksUriBuilder(title).build())
-                                            .GET()
-                                            .build(),
-                                    HttpResponse.BodyHandlers.ofString()
-                            )
-                            .body()
+                httpClient.send(
+                        HttpRequest.newBuilder()
+                            .uri(getBacklinksUriBuilder(title).build())
+                            .GET()
+                            .build(),
+                        HttpResponse.BodyHandlers.ofString()
+                    )
+                    .body()
             ).get();
-//            System.out.println("Got links from: " + title);
             WikiBacklinksResponse response = objectMapper.readValue(responseBody, WikiBacklinksResponse.class);
 
             return parseBacklinksResponse(response);

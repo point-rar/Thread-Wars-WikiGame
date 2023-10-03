@@ -1,16 +1,26 @@
 package rar.java;
 
+import rar.java.wiki.data.repository.WikiRemoteRepositoryImpl;
+import rar.java.wiki.data.source.WikiRemoteDataSource;
+import rar.java.wiki.domain.repository.WikiRepository;
+import rar.java.wiki.remote.WikiRemoteDataSourceImpl;
 import rar.java.repository.*;
-import repository.WikiGameAlgoImpl;
 
 public class Main {
     public static void main(String[] args) {
+        WikiRemoteDataSource wikiRemoteDataSource = new WikiRemoteDataSourceImpl();
+        WikiRepository wikiRepository = new WikiRemoteRepositoryImpl(wikiRemoteDataSource);
+
         long startTime = System.currentTimeMillis();
-        WikiGame wikiGame = new LoomAlgoImpl();
+
+        WikiGame wikiGame = new LoomImpl(wikiRepository);
 //        var path = wikiGame.play("Алгебра", "Ятаган", 6);
+//        var path = wikiGame.play("!!!", "Теория гомологий", 6);
         var path = wikiGame.play("Бакуган", "Библия", 6);
-        System.out.println(path);
+
         long endTime = System.currentTimeMillis();
+
+        System.out.println(path);
         System.out.println("Total execution time: " + (endTime - startTime) + "ms");
     }
 }
