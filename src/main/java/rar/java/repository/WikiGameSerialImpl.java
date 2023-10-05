@@ -1,8 +1,8 @@
 package rar.java.repository;
 
 import org.jetbrains.annotations.NotNull;
-import rar.java.wiki.data.source.WikiRemoteDataSource;
-import rar.java.wiki.remote.WikiRemoteDataSourceImpl;
+import rar.java.wiki.data.source.WikiDataSource;
+import rar.java.wiki.data.source.WikiDataSourceImpl;
 import rar.kotlin.model.Page;
 
 import java.util.*;
@@ -10,7 +10,7 @@ import java.util.*;
 public class WikiGameSerialImpl implements WikiGame {
     private static final String URL = "https://ru.wikipedia.org/w/api.php";
 
-    private final WikiRemoteDataSource wikiRemoteDataSource = new WikiRemoteDataSourceImpl();
+    private final WikiDataSource wikiDataSource = new WikiDataSourceImpl();
 
     @NotNull
     @Override
@@ -26,7 +26,7 @@ public class WikiGameSerialImpl implements WikiGame {
             System.out.println("parsedTitle size =  " + parsedTitle.size());
             var curPage = rawPages.poll();
             parentEndPage = curPage;
-            var newLinks = wikiRemoteDataSource.getLinksByTitle(curPage.getTitle());
+            var newLinks = wikiDataSource.getLinksByTitle(curPage.getTitle());
             parsedPages.add(curPage);
             parsedTitle.addAll(newLinks);
             rawPages.addAll(

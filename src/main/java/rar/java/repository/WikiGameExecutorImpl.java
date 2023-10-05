@@ -1,8 +1,8 @@
 package rar.java.repository;
 
 import org.jetbrains.annotations.NotNull;
-import rar.java.wiki.data.source.WikiRemoteDataSource;
-import rar.java.wiki.remote.WikiRemoteDataSourceImpl;
+import rar.java.wiki.data.source.WikiDataSource;
+import rar.java.wiki.data.source.WikiDataSourceImpl;
 import rar.kotlin.model.Page;
 
 import java.util.*;
@@ -13,7 +13,7 @@ public class WikiGameExecutorImpl implements WikiGame {
 
     private static AtomicBoolean isFinished = new AtomicBoolean(false);
 
-    private final WikiRemoteDataSource wikiRemoteDataSource = new WikiRemoteDataSourceImpl();
+    private final WikiDataSource wikiDataSource = new WikiDataSourceImpl();
 
     @NotNull
     @Override
@@ -47,7 +47,7 @@ public class WikiGameExecutorImpl implements WikiGame {
         return () -> {
             Page currentPage = rawPages.poll();
             if (currentPage != null) {
-                List<String> newLinks = wikiRemoteDataSource.getLinksByTitle(currentPage.getTitle());
+                List<String> newLinks = wikiDataSource.getLinksByTitle(currentPage.getTitle());
                 if (newLinks != null) {
                     parsedPages.add(currentPage);
                     for (String link : newLinks) {

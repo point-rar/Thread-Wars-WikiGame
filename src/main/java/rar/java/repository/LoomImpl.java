@@ -6,6 +6,7 @@ import rar.kotlin.model.Page;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LoomImpl implements WikiGame {
 
@@ -36,12 +37,12 @@ public class LoomImpl implements WikiGame {
     }
 
     private Page processPage(
-        Page page,
-        String endPageTitle,
-        int curDepth,
-        int maxDepth,
-        Map<String, Boolean> visitedPages
-    ) {
+            Page page,
+            String endPageTitle,
+            int curDepth,
+            int maxDepth,
+            Map<String, Boolean> visitedPages) {
+
         if (visitedPages.putIfAbsent(page.getTitle(), true) != null) {
             throw new RuntimeException("Already visited");
         }
@@ -63,8 +64,7 @@ public class LoomImpl implements WikiGame {
                         endPageTitle,
                         curDepth + 1,
                         maxDepth,
-                        visitedPages
-                    )
+                        visitedPages)
                 );
             });
 

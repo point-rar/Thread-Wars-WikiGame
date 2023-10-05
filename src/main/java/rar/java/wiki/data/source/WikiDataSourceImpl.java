@@ -1,4 +1,4 @@
-package rar.java.wiki.remote;
+package rar.java.wiki.data.source;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,7 +7,6 @@ import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
-import rar.java.wiki.data.source.WikiRemoteDataSource;
 import rar.kotlin.model.Link;
 import rar.kotlin.model.WikiBacklinksResponse;
 import rar.kotlin.model.WikiLinksResponse;
@@ -19,7 +18,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 
-public class WikiRemoteDataSourceImpl implements WikiRemoteDataSource {
+public class WikiDataSourceImpl implements WikiDataSource {
     private static final String URL = "https://ru.wikipedia.org/w/api.php";
 
     private static final RateLimiterConfig config = RateLimiterConfig.custom()

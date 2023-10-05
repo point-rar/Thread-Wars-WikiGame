@@ -3,8 +3,8 @@ package rar.java.repository;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
-import rar.java.wiki.data.source.WikiRemoteDataSource;
-import rar.java.wiki.remote.WikiRemoteDataSourceImpl;
+import rar.java.wiki.data.source.WikiDataSource;
+import rar.java.wiki.data.source.WikiDataSourceImpl;
 import rar.kotlin.model.Page;
 
 import java.util.*;
@@ -12,7 +12,7 @@ import java.util.concurrent.*;
 
 public class WikiGameFutureImpl implements WikiGame {
 
-    private static final WikiRemoteDataSource wikiRemoteDataSource = new WikiRemoteDataSourceImpl();
+    private static final WikiDataSource WIKI_DATA_SOURCE = new WikiDataSourceImpl();
 
     @NotNull
     @Override
@@ -80,6 +80,6 @@ public class WikiGameFutureImpl implements WikiGame {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        return wikiRemoteDataSource.getLinksByTitle(title);
+        return WIKI_DATA_SOURCE.getLinksByTitle(title);
     }
 }

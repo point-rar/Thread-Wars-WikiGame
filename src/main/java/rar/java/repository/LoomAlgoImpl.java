@@ -1,9 +1,7 @@
 package rar.java.repository;
 
 import jdk.incubator.concurrent.StructuredTaskScope;
-import rar.java.wiki.data.source.WikiRemoteDataSource;
 import rar.java.wiki.domain.repository.WikiRepository;
-import rar.java.wiki.remote.WikiRemoteDataSourceImpl;
 import rar.kotlin.model.BackwardPage;
 import rar.kotlin.model.ForwardPage;
 
