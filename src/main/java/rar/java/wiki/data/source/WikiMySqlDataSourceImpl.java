@@ -49,7 +49,7 @@ public class WikiMySqlDataSourceImpl implements WikiDataSource {
         try {
             var queryResult = RateLimiter.decorateCheckedSupplier(rateLimiter, () ->
                     connection.sendPreparedStatement(
-                            "SELECT pl_title from pagelinks join page on page_id = pl_from where page_title = ? and pl_namespace = 0",
+                            "SELECT page_title from pagelinks join page on pl_from = page_id where pl_title = ? and pl_namespace = 0;",
                             Collections.singletonList(title)
                     ).join());
 
