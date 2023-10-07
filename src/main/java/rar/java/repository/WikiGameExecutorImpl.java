@@ -47,7 +47,13 @@ public class WikiGameExecutorImpl implements WikiGame {
         return () -> {
             Page currentPage = rawPages.poll();
             if (currentPage != null) {
-                List<String> newLinks = wikiDataSource.getLinksByTitle(currentPage.getTitle());
+                List<String> newLinks;
+                try {
+                    newLinks = wikiDataSource.getLinksByTitle(currentPage.getTitle());
+                } catch (Throwable e) {
+                    newLinks = null;
+                }
+
                 if (newLinks != null) {
                     parsedPages.add(currentPage);
                     for (String link : newLinks) {
