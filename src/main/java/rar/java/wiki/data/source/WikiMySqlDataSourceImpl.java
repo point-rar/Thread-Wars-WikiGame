@@ -24,7 +24,7 @@ public class WikiMySqlDataSourceImpl implements WikiDataSource {
 
     // Connection to MySQL DB
     Connection connection = MySQLConnectionBuilder.createConnectionPool(
-            "jdbc:mysql://localhost:3306/wiki?user=root&password=2473538238");
+            "jdbc:mysql://localhost:3306/wiki?user=root&password=123456789");
 
     @Override
     public List<String> getLinksByTitle(String title) {
