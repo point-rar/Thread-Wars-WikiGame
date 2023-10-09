@@ -1,5 +1,8 @@
 # Thread Wars: Войны клонов на страницах Wiki
 
+### Чат книжного клуба .rar
+https://t.me/point_rar_chat
+
 ### Правила
 Описаны тут: https://telegra.ph/WikiGame-10-07
 
