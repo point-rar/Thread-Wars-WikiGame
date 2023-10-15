@@ -11,7 +11,7 @@ public class Main {
         WikiDataSource wikiDataSource = new WikiMySqlDataSourceImpl();
         WikiRepository wikiRepository = new WikiRepositoryImpl(wikiDataSource);
 
-        WikiGame wikiGame = new LoomAlgoImpl(wikiRepository);
+        WikiGame wikiGame = new ReactorAlgoWikiGameImpl(wikiRepository);
 
         long startTime = System.currentTimeMillis();
         var path = wikiGame.play("Охотники_за_привидениями", "Пуджа", 6);
