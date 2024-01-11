@@ -46,6 +46,8 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-timelimiter:2.1.0")
     implementation("io.github.resilience4j:resilience4j-ratelimiter:2.1.0")
 
+    implementation("io.projectreactor:reactor-core:3.5.10")
+
     // mysql
     val jasyncVersion = "2.2.0"
     implementation("com.github.jasync-sql:jasync-mysql:${jasyncVersion}")
